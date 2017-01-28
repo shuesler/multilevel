@@ -1,0 +1,163 @@
+---
+title: "Chapter 8"
+output: 
+  pdf_document:
+    highlight: pygments
+    number_sections: true
+---
+
+
+
+```{r}
+library(tidyverse)
+library(AzureML)
+ws <- workspace()
+
+mlbook_red <- tbl_df(download.datasets(
+  dataset = ws, 
+  name    = "mlbook2_r.csv"))
+# what are the available variables
+names(mlbook_red)
+
+# Attach library
+library(nlme)
+```
+
+
+Table 8.1 Model 1
+```{r}
+mod81 <- lme(langPOST ~ IQ_verb*ses + sex + sch_iqv*sch_ses, 
+                random=~IQ_verb|schoolnr, data = mlbook_red, method="ML")
+summary(mod81)
+```
+
+Model 2
+```{r}
+mod82 <- lme(langPOST ~ IQ_verb*ses + sex + sch_iqv*sch_ses, 
+                random=~IQ_verb|schoolnr, weights=varIdent(form=~1|sex),
+                data = mlbook_red, method="ML")
+summary(mod82)
+```
+
+
+nlme offers a number of variance functions that do not include
+the linear variance function used in Model 3.
+These are treated in Pinheiro & Bates (2004), Section 5.2.
+It turns out that the variance functions offered by nlme,
+when used in the default way, represent this data set
+slightly less well than a linear variance function.
+
+Therefore we work towards the results in Table 8.2
+by also using the result obtained by another program (MLwiN),
+namely, that the linear variance function for level 1 was estimated as
+
+```{r}
+IQ_verb <- mlbook_red$IQ_verb
+#36.382 - 2*1.689*IQ_verb
+```
+
+We define the transformed variable
+```{r}
+IQ_trans <- 36.382 - 2*1.689*mlbook_red$IQ_verb
+```
+
+
+
+We can use this variance function 
+(giving it a freely estimated multiplicative parameter, 
+which indeed will be estimated very close to 1)
+by using varFixed:
+
+```{r}
+mod83 <- lme(langPOST ~ IQ_verb*ses + sex + sch_iqv*sch_ses, 
+                random=~ IQ_verb|schoolnr, weights=varFixed(~IQ_trans),
+                data = mlbook_red, method="ML")
+summary(mod83)
+```
+
+Another way is by using varPower
+```{r}
+mod83a <- lme(langPOST ~ IQ_verb*ses + sex + sch_iqv*sch_ses, 
+                random=~ IQ_verb|schoolnr, weights=varPower(form=~IQ_trans),
+                data = mlbook_red, method="ML")
+summary(mod83a)
+```
+
+
+and a further additional parameter is allowed by varConstPower
+```{r}
+mod83b <- lme(langPOST ~ IQ_verb*ses + sex + sch_iqv*sch_ses, 
+                random=~ IQ_verb|schoolnr, 
+                weights=varConstPower(form=~IQ_trans),
+                data = mlbook_red, method="ML")
+summary(mod83b)
+```
+
+
+
+A more satisfactory approach that does not assume
+previous knowledge, is to use a categorized version of IQ_verb:
+First, look at the distribution to find reasonable category bounds
+```{r}
+hist(mlbook_red$IQ_verb)
+
+IQ_cat <- cut(mlbook_red$IQ_verb, c(-10,-2,-1,0,1,2,10))
+table(IQ_cat)
+```
+
+
+Now we fit a model where the variance depends on categorized IQ
+```{r}
+mod83c <- lme(langPOST ~ IQ_verb*ses + sex + sch_iqv*sch_ses, 
+                random=~ IQ_verb|schoolnr, 
+                weights=varIdent(form=~1|IQ_cat),
+                data = mlbook_red, method="ML")
+summary(mod83c)
+```
+
+Parameter const is estimated close to 0 and power close to 0.5,
+with the log-likelihood -12215.1; this means 
+that effectively the same model results as Model 3 in Table 8.2. 
+
+For Model 4 in Table 8.2, we first compute the transformed variables.
+```{r}
+IQ_plus2 <- with(mlbook_red, ifelse(IQ_verb > 0, IQ_verb^2, 0))
+IQ_min2 <- with(mlbook_red, ifelse(IQ_verb < 0, IQ_verb^2, 0))
+```
+
+Have a look at whether this does what we wanted:
+```{r}
+plot(mlbook_red$IQ_verb, IQ_plus2)
+plot(mlbook_red$IQ_verb, IQ_min2)
+```
+
+
+Again working toward the known answer, we transform IQ_verb to
+```{r}
+IQ_trans2 <- 36.139 - 2*1.769*mlbook_red$IQ_verb 
+```
+
+
+Estimating with varFixed turns out to require some higher
+control settings for the algorithm:
+```{r}
+mod84 <- lme(langPOST ~ IQ_verb*ses + sex + sch_iqv*sch_ses + 
+                        IQ_plus2 + IQ_min2, 
+           random=~ IQ_verb|schoolnr, weights=varFixed(~IQ_trans2),
+           control=lmeControl(maxIter=400,msMaxIter=400,msMaxEval=400,
+           niterEM=400,nlmStepMax=400,msTol=1E-9,msVerbose=TRUE),
+           data = mlbook_red, method="ML")
+summary(mod84)
+```
+
+Or, again with the categorized version of IQ:
+```{r}
+mod84c <- lme(langPOST ~ IQ_verb*ses + sex + sch_iqv*sch_ses + 
+                        IQ_plus2 + IQ_min2, 
+           random=~ IQ_verb|schoolnr, weights=varIdent(form=~1|IQ_cat),
+           data = mlbook_red, method="ML")
+summary(mod84c)
+```
+
+
+

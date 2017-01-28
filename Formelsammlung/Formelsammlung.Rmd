@@ -1,0 +1,462 @@
+---
+title: "Formelsammlung"
+author: "Silvan Hüsler"
+header-includes:
+   - \usepackage{bm}
+   - \usepackage{amsmath,amssymb,mathrsfs,booktabs}
+   - \newcommand{\matr}[1]{\mathbf{#1}} % undergraduate algebra version
+output: 
+  pdf_document:
+    keep_tex: false
+    highlight: pygments
+    number_sections: false
+nocite: | 
+  @Durrant.2013, @West.2014, @James.2013, @Steele.2005
+references:
+- id: Durrant.2010
+  type: article-journal
+  author:
+  - family: Durrant
+    given: Gabriele B.
+  - family: Groves
+    given: Robert M.
+  - family: Staetsky
+    given: Laura
+  - family: Steele
+    given: Fiona
+  issued:
+  - year: '2010'
+  title: EFFECTS of interviewer attitudes and behaviors on refusal in household surveys
+  container-title: The Public Opinion Quarterly
+  page: '1-36'
+  volume: '74'
+  issue: '1'
+  abstract: Interviewers play a crucial role in gaining cooperation from a sample
+    unit. This paper aims to identity the interviewer characteristics that influence
+    survey cooperation. Of principal interest to survey practitioners are interviewer
+    attributes associated with higher cooperation rates, particularly among sample
+    members whose characteristics are traditionally associated with a lower probability
+    of response. Our data source is unusually rich, in that it contains extensive
+    information on interviewers, including their attitudes and behaviors, which are
+    linked to detailed information on both responding and nonresponding sample units.
+    An important value of the data is that they permit examining a host of as yet
+    unanswered questions about whether some interviewer attributes stimulate cooperation
+    among some respondents but not others. In short, we investigate whether some sample
+    units react favorably to certain interviewer characteristics. A multilevel cross-classified
+    logistic model with random interviewer effects is used to account for clustering
+    of households within interviewers, due to unmeasured interviewer attributes, and
+    for the cross-classification of interviewers within areas. The model allows for
+    statistical interactions between interviewer and household characteristics.
+  ISSN: 0033362X, 15375331
+
+- id: Durrant.2013
+  type: chapter
+  author:
+  - family: Durrant
+    given: Gabriele B.
+  - family: D'arrigo
+    given: Julia
+  - family: Müller
+    given: Gerrit
+  editor:
+  - family: Kreuter
+    given: Frauke
+  issued:
+  - year: '2013'
+  title: 'Modeling call record data: Examples from cross-sectional and longitudinal
+    surveys'
+  title-short: Modeling call record data
+  container-title: Improving surveys with paradata
+  publisher: John Wiley & Sons, Inc
+  publisher-place: Hoboken, New Jersey
+  page: '281-308'
+  DOI: 10.1002/9781118596869.ch12
+  ISBN: '9781118596869'
+
+- id: West.2014
+  type: book
+  author:
+  - family: West
+    given: Brady T.
+  - family: Welch
+    given: Kathleen B.
+  - family: Galecki
+    given: Andrzej T.
+  issued:
+  - year: '2014'
+  title: 'Linear mixed models: A practical guide using statistical software, second
+    edition'
+  title-short: Linear mixed models
+  publisher: Taylor and Francis
+  publisher-place: Hoboken
+  number-of-pages: '434'
+  edition: 2\. ed.
+  abstract: 'Highly recommended by JASA, Technometrics, and other journals, the
+    first edition of this bestseller showed how to easily perform complex linear mixed
+    model (LMM) analyses via a variety of software programs. Linear Mixed Models:
+    A Practical Guide Using Statistical Software, Second Edition continues to lead
+    readers step by step through the process of fitting LMMs. This second edition
+    covers additional topics on the application of LMMs that are valuable for data
+    analysts in all fields. It also updates the case studies using the latest versions
+    of the software procedures and provides up-to-date in'
+  ISBN: '978-1-4665-6102-1'
+
+- id: James.2013
+  type: book
+  author:
+  - family: James
+    given: Gareth
+  - family: Witten
+    given: Daniela
+  - family: Hastie
+    given: Trevor
+  - family: Tibshirani
+    given: Robert
+  issued:
+  - year: '2013'
+  title: An introduction to statistical learning
+  publisher: Springer New York
+  URL: http://dx.doi.org/10.1007/978-1-4614-7138-7
+  DOI: 10.1007/978-1-4614-7138-7
+
+- id: Steele.2005
+  type: no-type
+  author:
+  - family: Steele
+    given: F.
+  issued:
+  - year: '2005'
+  title: Event history analysis
+  publisher: NCRM/004
+  publisher-place: NCRM Methods Review Papers
+  abstract: 'Highly recommended by JASA, Technometrics, and other journals, the
+    first edition of this bestseller showed how to easily perform complex linear mixed
+    model (LMM) analyses via a variety of software programs. Linear Mixed Models:
+    A Practical Guide Using Statistical Software, Second Edition continues to lead
+    readers step by step through the process of fitting LMMs. This second edition
+    covers additional topics on the application of LMMs that are valuable for data
+    analysts in all fields. It also updates the case studies using the latest versions
+    of the software procedures and provides up-to-date in'
+---
+
+
+# A James et al. 2013: Logistic Regression
+
+\begin{align}
+\text{Pr}(\text{default} &= \text{yes}|\text{balance}) \notag \\
+\text{p}(X) &= \beta_0 + \beta_1 X \tag{4.1} \\
+\text{p}(X) &= \frac{e^{\beta_0 + \beta_1 X}}{1-e^{\beta_0 + \beta_1 X}} \tag{4.2: logistic function} \\
+\frac{\text{p}(X)}{1-\text{p}(X)}  &= e^{\beta_0 + \beta_1 X} \tag{4.3} \\
+&=\frac{\text{p}(X)}{1-\text{p}(X)} \tag{odds} \\
+\text{log} \left(\frac{\text{p}(X)}{1-\text{p}(X)} \right)  &= \beta_0 + \beta_1 X \tag{4.4: lhs -> log-odds oder logit}
+\intertext{Wie wirkt sich eine Einheit mehr von X aus?}
+&\text{-> } \frac{\text{p}(X)}{1-\text{p}(X)} \times e^{b_1} \notag
+\end{align}
+
+<!-- *+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*  -->
+
+# B West et al. 2014: Linear Mixed Models
+
+
+
+## 3 Two-Level Models for Clustered Data: The Rat Pup Example
+
+### A General Model
+
+\begin{align*}
+\text{WEIGHT}_{ij} = \beta_{0} + \beta_{1} &\times \text{TREAT1}_j  + \beta_{2} \text{TREAT2}_j + \beta_{3} \times \text{SEX1}_{ij} + \\
+\beta_{4} &\times \text{LITSIZE}_j + \beta_{5} \times \text{TREAT1}_j \times \text{SEX1}_{ij} + \\
+\beta_{6} &\times \text{TREAT2}_j \times \text{SEX1}_{ij} + \\
+\\
+&\text{u}_j + \varepsilon_{ij}  \\
+\end{align*}
+
+
+
+
+### Level 1 Model (Rat Pup)
+
+$$
+\text{WEIGHT}_{ij} = \beta_{0j} + \beta_{1j} \times \text{SEX1}_{ij} + \varepsilon_{ij}
+$$
+
+
+### Level 2 Model (Litter)
+
+\begin{align*}
+\beta_{0j} &= \beta_{0} + \beta_{1}  \times \text{TREAT1}_j  + \beta_{2} \text{TREAT1}_j + \beta_{4} \text{LITSIZE}_j + \text{u}_j \\
+\beta_{1j} &= \beta_{3} + \beta_{5}  \times \text{TREAT1}_j  + \beta_{6} \text{TREAT2}_j 
+\end{align*}
+
+
+
+## 6 Random Coefficient Models for Longitudinal Data: The Autism Example
+
+### A General Model
+
+\begin{align*}
+\text{VSAE}_{ti} = \beta_0 + \beta_1 &\times \text{AGE2}_{ti} + 
+\\ \beta_2 &\times \text{AGE2SQ}_{ti} + 
+\\ \beta_3 &\times \text{SICDEGP1}_i + 
+\\ \beta_4 &\times \text{SICDEGP2}_i + 
+\\ \beta_5 &\times \text{SICDEGP1}_i \times \text{AGE2}_{ti} +
+\\ \beta_6 &\times \text{AGE2}_{ti} \times \text{SICDEGP2}_i \times \beta_7 \times \text{AGE2SQ} \times \text{SICDEGP1}_i + 
+\\ \beta_8 &\times \text{AGE2SQ} \times \text{SICDEGP2}_i + \\
+\\
+\text{u}_{0i} +
+\text{u}_{1i} &\times \text{AGE2}_{ti} +
+\text{u}_{2i} \times \text{AGE2SQ}_{ti} +  \varepsilon_{ti}
+\end{align*}
+
+
+
+
+### Level 1 Model (Time)
+
+\[
+\text{VSAE}_{ti} = \beta_{0i} + \beta_{1i} \times \text{AGE2}_{ti} + \beta_{2i} \text{AGE2SQ}_{ti} + \varepsilon_{ti}
+\]
+
+
+### Level 2 Model (Child)
+
+
+
+\begin{align*}
+\beta_{0i} &= \beta_0 + \beta_3 \times \text{SICDEGP1}_i + \beta_4 \times \text{SICDEGP2}_i + \text{u}_{0i}\\
+\beta_{1i} &= \beta_1 + \beta_5 \times \text{SICDEGP1}_i + \beta_6 \times \text{SICDEGP2}_i + \text{u}_{1i}\\
+\beta_{2i} &= \beta_2 + \beta_7 \times \text{SICDEGP1}_i + \beta_8 \times \text{SICDEGP2}_i + \text{u}_{2i}\\
+\end{align*}
+
+
+
+```{r, include=FALSE}
+#setwd("C:/Users/shs/Desktop")
+library("tidyverse")
+library("modelr")
+
+
+library(AzureML)
+ws <- workspace()
+
+autism <- download.datasets(
+  dataset = ws, 
+  name    = "autism.csv")
+attach(autism)
+
+sicdegp.f <- factor(sicdegp)
+age.f <- factor(age)
+autism.updated <- data.frame(autism, sicdegp.f, age.f)
+
+summary(age.f)
+table(sicdegp.f, age.f)
+summary(vsae)
+tapply(vsae, age.f, mean, na.rm=TRUE)
+tapply(vsae, age.f, min, na.rm=TRUE)
+tapply(vsae, age.f, max, na.rm=TRUE)
+
+age.2 <- age - 2
+age.2sq <- age.2*age.2
+sicdegp2 <- sicdegp
+sicdegp2[sicdegp == 3] <- 0
+sicdegp2[sicdegp == 2] <- 2 
+sicdegp2[sicdegp == 1] <- 1
+sicdegp2.f <- factor(sicdegp2)
+
+autism.updated <- subset(data.frame(autism, sicdegp2.f, age.2), !is.na(vsae))
+```
+
+### Merke: Wichtiger Aspekt bezüglich dem Verständnis der Modelle ist Kenntnis, wie Formeln den Datensatz transformieren!
+
+```{r}
+form <- vsae ~ 
+        age.2 + 
+        I(age.2^2) + 
+        sicdegp2.f + 
+        age.2*sicdegp2.f + 
+        I(age.2^2)*sicdegp2.f + 
+        (age.2 + I(age.2^2) | childid)
+```
+
+
+```{r}
+model_matrix(autism.updated, form) %>% glimpse
+```
+
+
+<!-- *+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*  -->
+
+# C Steele 2005: Event History Analysis
+
+## 2. Descriptive Event History Analysis
+###  2.1 Definitions: hazard and survivor functions
+###  2.2 Estimation of the hazard and survivor functions 
+
+<!-- Seite 7 -->
+
+\begin{align}
+\hat{h}_{t} &= \frac{d_{t}}{r_{t}-w_{t}/2} \tag{2.1} \\
+\hat{S}_{1}       &= 1 \notag \\
+\hat{S}_{t}       &= (1-\hat{h}_{1})(1-\hat{h}_{2})\ldots(1-\hat{h}_{t-1}) \text{ for } t>1 \tag{2.2} \\
+            &= \prod_{j=1}^{t-1}(1-\hat{h}_{j}) \notag
+\end{align}
+
+
+
+
+
+## 3. Continuous-time Event History Models
+###  3.1 Introduction
+###  3.2 Proportional hazards and accelerated life models
+####  3.2.1 Proportional hazards model
+
+\begin{align}
+h(t;\matr{x}_{i})                             &= h_{0}(t)g(\matr{x}_{i}) \tag{3.1} \\
+\frac{h(t;\matr{x}_{1})}{h(t;\matr{x}_{2})} &= \frac{g(\matr{x}_{1})}{g(\matr{x}_{2})} \notag
+\end{align}
+
+
+###  3.3 Cox proportional hazards model
+
+\begin{align}
+h(t;\matr{x}_{i})      &= h_{0}(t)\exp\left(\bm{\beta}' \matr{x}_{i}\right) \tag{3.2} \\
+\log h(t;\matr{x}_{i}) &= \log h_{0}(t)+\bm{\beta}' \matr{x}_{i} \tag{3.3}
+\end{align}
+
+
+## 4. Discrete-time Event History Models
+###  4.1 The discrete-time approach
+###  4.2 Data structure for a discrete-time analysis
+
+$y_{ti}=
+\left\{\begin{array}{ll}
+0 & t<y_{i}\\
+0 & t=y_{i},\ \delta_{i}=1\\
+1 & t=y_{i},\ \delta_{i}=0.
+\end{array}\right.$
+
+##  4.3 Discrete-time models
+
+
+\begin{align}
+\text{logit}(h_{ti})= \log\left(\frac{h_{ti}}{1-h_{ti}}\right)=\alpha(t)+\bm{\beta}' \matr{x}_{ti} \tag{4.1}
+\end{align}
+
+
+
+## 5. Unobserved Heterogeneity	
+### 5.1 The problem and implications of unobserved heterogeneity
+###  5.2 Incorporating unobserved heterogeneity
+#### 5.2.1 The Cox model with frailty
+
+
+\begin{align}
+h(t;\matr{x}_{i}, u_i)      &= h_{0}(t) u_i \exp\left(\bm{\beta}' \matr{x}_{i}\right) \tag{5.1}
+\end{align}
+
+
+####  5.2.2 The discrete-time logit model with frailty
+\begin{align}
+\text{logit}(h_{ti})        &= \alpha(t)+\bm{\beta}' \matr{x}_{ti} + u_i \tag{5.2} 
+\end{align}
+
+###  5.3 Example: age at first partnership
+## 6. Repeated Events
+###  6.1 Examples
+###  6.2 Issues in the analysis of repeated events
+###  6.3 A discrete-time model for repeated events
+
+\begin{align}
+\text{logit}(h_{tij})          &= \alpha(t) + \bm{\beta}' \matr{x}_{tij} + u_i \tag{6.1}
+\end{align}
+
+## 7. Competing Risks
+###  7.1 Introduction
+###  7.2 Definitions
+
+$h^{(r)}(t)=\displaystyle \lim_{dt\rightarrow 0}\frac{\mathrm{P}\mathrm{r}(t\leq T<t+dt,R=r|T\geq t)}{dt}.$
+
+###  7.3 Models for competing risks
+####  7.3.1 Separate models for each type of transition
+
+$\delta_{i}^{(r)}=\left\{\begin{array}{ll}
+1 & \mathrm{i}\mathrm{f}\ r_{i}\neq r\\
+0 & \mathrm{i}\mathrm{f}\ r_{i}=r.
+\end{array}\right.$
+
+
+\begin{align}
+\log h^{(r)}(t;\matr{x}_{i}^{(r)}(t))=\log h_{0}^{(r)}(t)+\bm{\beta}^{(r)} \mathrm{'} \matr{x}_{i}^{(r)}(t),  r=1,\cdots, k \tag{7.1}
+\end{align}
+
+
+$y_{ti}^{(r)}=
+\left\{\begin{array}{ll}
+0 & t<y_{i}\\
+0 & t=y_{i},\ r_{i}=r\\
+1 & t=y_{i},\ r_{i}\neq r.
+\end{array}\right.$
+
+
+\begin{align}
+h_{ti}^{(r)} &= \mathrm{P}\mathrm{r}(y_{ti}^{(r)}=1|\mathrm{y}_{si}=0,s<t) \notag \\
+logit (h_{ti}^{(r)}) &= \alpha^{(r)}(t)+\bm{\beta}^{(r)} \mathrm{'} \matr{x}_{ti}^{(r)}, r=1,\cdots,k \tag{7.2}
+\end{align}
+
+
+####  7.3.2 Modelling event types simultaneously: the multinomial logit model 
+
+\begin{align}
+h_{ti}^{(0)}                            &= \mathrm{P}\mathrm{r}(y_{ti}=0|y_{si}=0,\ s<t)=1-\sum_{r=1}^{k}h_{ti}^{(r)} \tag{7.3} \\
+\log\left(\frac{h_{ti}^{(r)}}{h_{ti}^{(0)}}\right) &= \alpha^{(r)}(t)+\bm{\beta}^{(r)} \mathrm{'} \matr{x}_{ti}^{(r)} \quad r=1,\cdots,k. \tag{7.4} \\
+\notag \\
+h_{ti}^{(r)}                            &= \frac{\exp[\alpha^{(r)}(t)+\beta^{(r)_{1}}\mathrm{x}_{ti}^{(r)}]}
+{1+\sum_{lr=1}^{k}\exp[\alpha^{(l)}(t)+\bm{\beta}^{(l)_{1}}\matr{x}_{ti}^{(l)}]}, \quad r=1, \cdots k, \tag{7.5} \\
+\notag \\
+\hat{S}_{1i}=1; \hat{S}_{ti} &= \prod_{j=1}^{t-1}(1-\hat{h}_{ji}) , t>1, \tag{7.6} \\
+\text{where } \hat{h}_{ji} &= \sum_{r=1}^{k}\hat{h}_{ji}^{(r)}. \notag \\
+\notag \\
+\hat{f}_{ti}^{(r)} &=\hat{h}_{ti}^{(r)}\hat{S}_{ti} \tag{7.7} \\
+\mathrm{\hat{F}}_{ti}^{(r)} &=\sum_{j}^{t}\hat{f}_{ji}^{(r)} \tag{7.8}
+\end{align}
+
+
+
+
+# D Durrant & Müller 2013: Modeling Call Record Data: Examples From Cross-Sectional and Longitudinal Surveys
+
+## 12.3.2.1 Modeling the Outcome at a Particular Call
+
+\begin{align}
+\text{log} \left(\frac{\pi_i}{1-\pi_i}\right) &= \beta' x_i \tag{Model 1} \\
+\text{log} \left(\frac{\pi_{ij}}{1-\pi_{ij}}\right) &= \beta' x_{ij} +u_j \tag{Model 2}
+\end{align}
+
+
+## 12.3.2.2 Modeling the Outcome Across Calls (Discrete-Time Event History Analysis)
+
+\begin{align}
+\text{log} \left(\frac{\pi_{ti}}{1-\pi_{ti}}\right) &= \alpha_t + \beta' x_{ti} \tag{Model 3}
+\end{align}
+
+
+## 12.3.2.3 Modeling the Outcome Across Calls for Repeated Events (Discrete-Time Event History Analysis)
+
+\begin{align}
+\text{log}\left(\frac{\pi_{ti}}{1-\pi_{ti}}\right) &= \alpha_t + \beta' x_{ti} + h_i \tag{Model 4}\\
+\notag \\
+\text{log}\left(\frac{\pi^{(s)}_{tij}}{\pi^{(4)}_{tij}}\right) &= \alpha^{(s)}_{t} + \beta'^{(s)} x^{(s)}_{tij} + h^{(s)}_{ij} + u^{(s)}_j  \tag{Model 5} \\
+\notag \\
+\text{log}\left(\frac{\pi^{(s)}_{tij}}{\pi^{(4)}_{tij}}\right) &= \alpha^{(s)}_{t} + \beta^{(s)} x^{(s)}_{tij} + \lambda^{(s)} h_{ij} + \gamma^{(s)} u_j  \tag{Model 5$\matr{'}$}
+\end{align}
+
+
+
+
+
+
+
+# Literatur
+
+
+

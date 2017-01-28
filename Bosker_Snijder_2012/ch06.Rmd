@@ -1,0 +1,205 @@
+---
+title: "Chapter 6"
+output: 
+  pdf_document:
+    highlight: pygments
+    number_sections: true
+---
+
+```{r}
+
+library(tidyverse)
+library(AzureML)
+ws <- workspace()
+
+mlbook_red <- tbl_df(download.datasets(
+  dataset = ws, 
+  name    = "mlbook2_r.csv"))
+
+# what are the available variables
+names(mlbook_red)
+
+# Attach library
+library(nlme)
+```
+
+
+## Table 6.1.1
+
+```{r}
+mlb611 <- lme(langPOST ~ IQ_verb + sch_iqv + ses,
+                        random =~ IQ_verb|schoolnr, data = mlbook_red,
+                        method="ML")
+summary(mlb611)
+
+# Deviation variable
+IQ_dev <- mlbook_red$IQ_verb - mlbook_red$sch_iqv
+mlb612 <- lme(langPOST ~ IQ_dev + sch_iqv + ses,
+                        random =~ IQ_verb|schoolnr, data = mlbook_red,
+                        method="ML")
+summary(mlb612)
+```
+
+
+# Example 6.2
+## Table 4.2
+```{r}
+mlb42 <- lme(langPOST ~ IQ_verb,
+                        random =~ 1|schoolnr, data = mlbook_red,
+                        method="ML")
+# OLS result, Table 4.3
+mlb42.ols <- lm(langPOST ~ IQ_verb, data = mlbook_red)
+-2*logLik(mlb42)
+-2*logLik(mlb42.ols)
+anova(mlb42, mlb42.ols)
+```
+
+
+
+# Example 6.4
+
+<!--
+# The numbers in the first part of the example are wrong.
+# The correction is given on
+# http://www.stats.ox.ac.uk/~snijders/mlbook.htm
+-->
+
+## Table 4.4
+
+```{r}
+mlb44 <- lme(langPOST ~ IQ_verb + sch_iqv,
+                        random =~ 1|schoolnr, data = mlbook_red,
+                        method="ML")
+summary(mlb44)
+# Table 5.1
+mlb51 <- lme(langPOST ~ IQ_verb + sch_iqv,
+                        random =~ IQ_verb|schoolnr, data = mlbook_red,
+                        method="ML")
+summary(mlb51)
+-2*logLik(mlb44)
+-2*logLik(mlb51)
+2*logLik(mlb51) - 2*logLik(mlb44)
+# Averaging chi-squared distributions with df=1 and df=2 yields
+1 - 0.5*pchisq(2*(logLik(mlb51) - logLik(mlb44)), df=1) -
+      0.5*pchisq(2*(logLik(mlb51) - logLik(mlb44)), df=2)
+# To check Table 6.2, e.g.,
+1 - 0.5*pchisq(8.27, df=1) - 0.5*pchisq(8.27, df=2)
+
+
+```
+
+
+
+
+
+## Table 5.4
+```{r}
+mlb54 <- lme(langPOST ~ IQ_verb * ses + sch_iqv * sch_ses,
+                        random =~ IQ_verb|schoolnr, data = mlbook_red,
+                        method="ML")
+mlb54r <- lme(langPOST ~ IQ_verb * ses + sch_iqv * sch_ses,
+                        random =~ 1|schoolnr, data = mlbook_red,
+                        method="ML")
+summary(mlb54)
+summary(mlb54r)
+-2*logLik(mlb54)
+-2*logLik(mlb54r)
+2*logLik(mlb54) - 2*logLik(mlb54r)
+# Averaging chi-squared distributions with df=1 and df=2 yields
+1 - 0.5*pchisq(2*(logLik(mlb54) - logLik(mlb54r)), df=1) -
+      0.5*pchisq(2*(logLik(mlb54) - logLik(mlb54r)), df=2)
+```
+
+
+# Example 6.5
+```{r}
+# Use package lme4
+detach("package:nlme")
+library(lme4)
+library(lattice)
+
+mlb0 <- lmer(langPOST ~  (1|schoolnr), data = mlbook_red,
+             REML = FALSE)
+summary(mlb0)
+
+# profile likelihood
+pr0 <- profile(mlb0)
+xyplot(pr0,aspect=1.3)
+confint(pr0)
+confint(pr0, level=0.90)
+# sig01 is the random intercept standard deviation
+# lsig is the logarithm of the level-one standard deviation
+# Understand the object returned:
+str(confint(pr0))
+# Transform to confidence intervals for other functions
+sqr <- function(a){a*a}
+sqr(confint(pr0)[1,])
+exp(2*confint(pr0)[2,])
+
+# Symmetric confidence intervals:
+
+s <- sigma(mlb0)
+t2 <- VarCorr(mlb0)$schoolnr[1,1]
+s2 <- s*s
+t <- sqrt(t2)
+c <- qnorm(0.975)
+
+set2 <- 2.16
+ses2 <- 1.49
+ses <- ses2/(2*s)
+set <- set2/(2*t)
+
+t2+1.96*set2
+t2-1.96*set2
+s2 + 1.96*ses2
+s2 - 1.96*ses2
+
+t+1.96*set
+t-1.96*set
+s+1.96*ses
+s-1.96*ses
+
+splom(pr0)
+
+mlb44r <- lmer(langPOST ~ IQ_verb + sch_iqv + (1|schoolnr), data = mlbook_red,
+             REML = FALSE)
+pr44 <- profile(mlb44r)
+VarCorr(mlb44)
+confint(pr44)
+
+sqr(confint(pr44)[1,])
+exp(confint(pr44)[2,])
+exp(2*confint(pr44)[2,])
+
+s <- sigma(mlb44r)
+t2 <- VarCorr(mlb44r)$schoolnr[1,1]
+s2 <- s*s
+t <- sqrt(t2)
+c <- qnorm(0.975)
+
+# Now using the standard errors obtained from MLwiN:
+set2 <- 1.0965
+ses2 <- 0.9597
+ses <- ses2/(2*s)
+set <- set2/(2*t)
+
+t2+1.96*set2
+t2-1.96*set2
+s2 + 1.96*ses2
+s2 - 1.96*ses2
+
+t+1.96*set
+t-1.96*set
+s+1.96*ses
+s-1.96*ses
+
+splom(pr44)
+
+xyplot(pr44,aspect=1.3)
+
+# The further analysis using mcmcsamp, which was listed here earlier, is withdrawn
+# because mcmcsamp was withdrawn; see the help page
+# ?pvalues
+# for lme4.
+```
+

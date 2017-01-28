@@ -1,0 +1,297 @@
+---
+title: "MCMCGuide10"
+header-includes:
+   - \usepackage{bm}
+   - \usepackage{amsmath,amssymb,mathrsfs,booktabs}
+   - \newcommand{\matr}[1]{\mathbf{#1}} % undergraduate algebra version
+author: "Silvan Hüsler"
+date: "18 Januar 2017"
+output: 
+  pdf_document:
+    toc: TRUE
+    keep_tex: false
+    highlight: pygments
+    number_sections: false
+nocite: | 
+  @Hox.2014, @Zhang.2016
+# -------------------------------------------------
+references:
+- id: Hox.2014
+  type: chapter
+  author:
+  - family: Hox
+    given: Joop
+  - family: Wijngaards-de Meij
+    given: Leoniek
+  editor:
+  - family: Best
+    given: Henning
+  - family: Wolf
+    given: Christof
+  issued:
+  - year: '2014'
+  title: The multilevel regression model
+  container-title: The sage handbook of regression analysis and causal inference
+  publisher: SAGE Publications Ltd
+  page: '133-152'
+  DOI: 10.4135/9781446288146.n7
+  ISBN: '9781446252444'
+# -------------------------------------------------
+- id: Zhang.2016
+  type: article-journal
+  author:
+  - family: Zhang
+    given: Zhengzheng
+  - family: Parker
+    given: Richard M. A.
+  - family: Charlton
+    given: Christopher M. J.
+  - family: Leckie
+    given: George
+  - family: Browne
+    given: William J.
+  issued:
+  - year: '2016'
+  title: 'R2MLwiN: A package to run mlwin from within r'
+  title-short: R2MLwiN
+  container-title: Journal of Statistical Software
+  volume: '72'
+  issue: '10'
+  DOI: 10.18637/jss.v072.i10
+  ISSN: '1548-7660'
+# *+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval=TRUE)
+```
+
+
+```{r pakete, include=FALSE}
+library("tidyverse")
+library("purrr")
+library("lazyeval")
+library("readr")
+library("haven")
+library("lubridate")
+library("magrittr")
+library("stringr")
+library("tibble")
+library("zoo")
+library("dygraphs")
+library("plotly")
+library("glmmML")
+library("survival")
+library("forcats")
+library("wesanderson")
+library("car")
+options(tibble.print_min = 100)
+options(scipens = 9999999999999999999)
+library("R2MLwiN")
+library("doBy")
+options(MLwiN_path = "C:/Program Files (x86)/MLwiN trial/i386/")
+```
+
+<!--
+## openbugs executable
+if (!exists("openbugs")) openbugs <- "C:/Program Files (x86)/OpenBUGS/OpenBUGS323/OpenBUGS.exe"
+while (!file.access(openbugs, mode = 0) == 0 || !file.access(openbugs, mode = 1) == 0 || !file.access(openbugs, mode = 4) == 
+  0) {
+  cat("Please specify the path for the OpenBUGS executable:\n")
+  openbugs <- scan(what = character(0), sep = "\n")
+  openbugs <- gsub("\\", "/", openbugs, fixed = TRUE)
+}
+
+# User's input if necessary
+
+## winbugs executable
+#winbugs="C:/Program Files (x86)/WinBUGS14/WinBUGS14.exe"
+-->
+
+
+
+```{r}
+data(bang1, package = "R2MLwiN")
+```
+
+
+## 10.1 Simple logistic regression model
+
+```{r}
+(mymodel1 <- 
+    runMLwiN(
+      logit(use) ~ 1 + age, 
+      D = "Binomial", 
+      estoptions = list(
+        EstM = 1), 
+      data = bang1))
+```
+
+```{r}
+summary(mymodel1@chains[, "FP_age"])
+```
+
+```{r}
+sixway(mymodel1@chains[, "FP_age", drop = FALSE], "beta_1")
+```
+
+
+### 15,000 iterations
+
+```{r}
+(mymodel2 <- 
+    runMLwiN(
+      logit(use) ~ 1 + age,
+      D = "Binomial", 
+      estoptions = list(
+        EstM = 1, 
+        mcmcMeth = list(iterations = 15000)), 
+      data = bang1))
+```
+
+```{r}
+sixway(mymodel1@chains[, "FP_age", drop = FALSE], "beta_1")
+```
+
+### Change to 5000 iterations by default
+
+```{r}
+(mymodel3 <- 
+   runMLwiN(
+      logit(use) ~ 1 + age + lc, 
+      D = "Binomial", 
+      estoptions = list(EstM = 1), 
+      data = bang1))
+```
+
+
+## 10.2 Random effects logistic regression model
+
+```{r}
+(mymodel4 <- 
+   runMLwiN(
+      logit(use) ~ 1 + age + lc + (1 | district), 
+      D = "Binomial", 
+      estoptions = list(EstM = 1), 
+   data = bang1))
+```
+
+```{r}
+summary(mymodel4@chains[, "RP2_var_Intercept"])
+```
+
+```{r}
+sixway(mymodel4@chains[, "RP2_var_Intercept", drop = FALSE], "sigma2u0")
+```
+
+
+## 10.3 Random coefficients for area type 
+
+```{r}
+(mymodel5 <- 
+    runMLwiN(
+      logit(use) ~ 1 + age + lc + urban + (1 | district), 
+      D = "Binomial", estoptions = list(EstM = 1), 
+      data = bang1))
+```
+
+```{r}
+(mymodel6 <- 
+  runMLwiN(
+    logit(use) ~ 1 + age + lc + urban + (1 + urban | district), 
+    D = "Binomial", 
+    estoptions = list(EstM = 1), 
+    data = bang1))
+```
+
+
+## 10.4 Probit regression
+
+## 10.5 Running a probit regression in MLwiN
+
+### Gibbs
+
+```{r}
+(mymodel7 <- 
+    runMLwiN(
+      probit(use) ~ 1 + age + lc + urban + (1 + urban | district), 
+      D = "Binomial", 
+      estoptions = list(
+        EstM = 1, 
+        mcmcMeth = list(
+          fixM = 1, 
+          residM = 1)), 
+      data = bang1))
+```
+
+
+### Univariate MH by default
+
+```{r}
+(mymodel8 <- 
+    runMLwiN(
+      probit(use) ~ 1 + age + lc + urban + (1 + urban | district), 
+      D = "Binomial", 
+      estoptions = list(EstM = 1), 
+      data = bang1))
+```
+
+```{r}
+library(texreg)
+screenreg(
+  list(mymodel7, mymodel8), 
+  custom.model.names=c("Gibbs", "Metropolis"), 
+  groups = list(
+    "Fixed Part" = 1:6, 
+    "Level-2"    = 7:9, 
+    "Level-1"    = 10:10),
+  stars = numeric(0), 
+  include.nobs=FALSE, 
+  include.loglik=FALSE, 
+  include.deviance=FALSE, 
+  include.dbar=FALSE, 
+  include.dthetabar=FALSE, 
+  include.pd=FALSE, 
+  include.dic=FALSE)
+```
+
+```{r}
+cat("The effective sample sizes\n")
+ESS.aa <- effectiveSize(mymodel7@chains[, 2:11])
+
+ESS.bb <- effectiveSize(mymodel8@chains[, 2:11])
+
+ctable <- cbind(round(ESS.aa), round(ESS.bb))
+
+colnames(ctable) <- c("ESS(Gibbs)", "ESS(Metropolis)")
+
+print(ctable)
+```
+
+
+
+<!--
+
+# 10.6 Comparison with WinBUGS
+
+mymodel9 <- runMLwiN(logit(use) ~ 1 + age + (1 | district), D = "Binomial", estoptions = list(EstM = 1), BUGO = c(version = 4, 
+  n.chains = 1, debug = FALSE, seed = 1, bugs = openbugs, OpenBugs = TRUE), data = bang1)
+
+summary(mymodel9)
+summary(mymodel9[, "beta[1]"])
+sixway(mymodel9[, "beta[1]", drop = FALSE])
+
+(mymodel10 <- runMLwiN(logit(use) ~ 1 + age + (1 | district), D = "Binomial", estoptions = list(EstM = 1), 
+  data = bang1))
+
+summary(mymodel10@chains[, "FP_Intercept"])
+sixway(mymodel10@chains[, "FP_Intercept", drop = FALSE], "beta_0")
+
+# Chapter learning outcomes . . . . . . . . . . . . . . . . . . . . . . .128
+
+-->
+
+
+
+

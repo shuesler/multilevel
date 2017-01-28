@@ -1,0 +1,399 @@
+---
+title: "Snijders, Tom A.B., and Bosker, Roel J. 2012"
+subtitle: "Kapitel 17 - " 
+author: "shs"
+date: "19 1 2017"
+output: 
+  pdf_document:
+    toc: true
+    toc_depth: 3
+    highlight: pygments
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval= TRUE)
+
+```
+
+```{r}
+source("C:/Users/shs/Desktop/pw.R")
+```
+
+
+
+```{r}
+library("AzureML")
+ws <- workspace(
+  id           = id_shs,
+  auth         = auth_shs,
+  api_endpoint = "https://studioapi.azureml.net"
+)
+
+ds1 <- download.datasets(
+  dataset = ws,
+  name = "rel_level1.txt"
+)
+
+ds2 <- download.datasets(
+  dataset = ws,
+  name = "rel_level2.txt"
+)
+
+ds3 <- download.datasets(
+  dataset = ws,
+  name = "loop.csv"
+)
+
+
+
+level1 <- read.table(textConnection(ds1), header=T) 
+level2 <- read.table(textConnection(ds2), header=T)
+loop   <- ds3
+
+###############################################
+```
+
+
+```{r}
+start <- Sys.time()
+```
+
+
+
+```{r}
+# What have we got?
+names(level1)
+dim(level1)
+names(level2)
+dim(level2)
+```
+
+## Example 17.1
+
+```{r}
+# table of religiosity by country
+ra.by.c <- table(level1$religiousattendance,by = level1$COUNTRY)
+dim(ra.by.c)
+# Chi-squared test
+(chi2 <- chisq.test(ra.by.c))
+# Average
+p <- sum(ra.by.c[2,])/sum(ra.by.c)
+```
+
+```{r}
+# Proportions by country
+props <- ra.by.c[2,]/(ra.by.c[2,] + ra.by.c[1,])
+# The data for Figure 17.1.
+props
+# Note that the smallest value
+min(props)
+# is 0.006, obtained for China - overlooked in the book!
+```
+
+```{r}
+# To calculate tau-hat, we follow the calculations of p. 292-293
+# Total sample size
+ntot <- sum(ra.by.c)
+# Number of countries
+nco  <- dim(ra.by.c)[2]
+# Sample sizes by country
+nj <- colSums(ra.by.c)
+# Their variance
+s2nj <- var(nj)
+# Formula (3.7), also see p. 292.
+(ntilde <- (ntot - sum(nj*nj)/ntot)/(nco-1))
+# A different way of calculating the same
+(ntilde <- (ntot/nco) - (var(nj)/ntot))
+```
+
+
+```{r}
+# S-squared-between
+(s2_b <- p*(1-p)*(chi2$statistic)/(ntilde*(nco-1)))
+# S-squared-within
+(s2_w <- (sum(ra.by.c[1,]*ra.by.c[2,]/nj))/(ntot-nco))
+# tau-hat-squared
+tau2 <- s2_b - (s2_w/ntilde)
+# The estimated between-country standard deviation
+sqrt(tau2)
+```
+
+
+## Example 17.2
+
+
+```{r}
+# Calculate odds
+ods <- ra.by.c[2,]/ra.by.c[1,]
+```
+
+
+```{r}
+# The log-odds for Figure 17.5.
+lods <- log(ra.by.c[2,]/ra.by.c[1,])
+# drop the names
+names(lods) <- c(1:60)
+lods
+```
+
+```{r}
+# Data manipulations
+level1 <- droplevels(level1)
+level2 <- droplevels(level2)
+# First merge the two data sets
+level12 <- merge(level1,level2)
+dim(level12)
+```
+
+```{r}
+# Something is strange with the data from Turkey
+Turkey.level12 <- level12$COUNTRY == "Turkey"
+hist(level12$income[Turkey.level12])
+hist(level12$income[!Turkey.level12])
+# Therefore we drop this country
+level12_nT <- level12[!Turkey.level12,]
+dim(level12_nT)
+# For income, there are some outliers
+hist(level12$income)
+# We truncate income at 3
+sum(level12_nT$income > 3)
+level12_nT$income <- ifelse(level12_nT$income > 3, 3, level12_nT$income)
+sum(level12_nT$income > 3)
+sum(level12_nT$income >= 3)
+```
+
+### mlm0
+
+```{r}
+# The multilevel logistic models will be estimated using lme4.
+library(lme4)
+
+# Table 17.1
+summary(mlm0 <- glmer(religiousattendance ~ (1|COUNTRY),
+          family = binomial, data=level12_nT))
+```  
+
+```{r}
+# Estimated average log-odds is
+(b0 <- fixef(mlm0))
+```
+
+
+```{r}
+# which transformed to a probability is
+(p0 <- exp(b0)/(1+exp(b0)))
+```
+
+```{r}
+# The estimated level-2 variance is
+(tau00 <- VarCorr(mlm0)$COUNTRY[1,1])
+```
+
+```{r}
+# with corresponding standard deviation
+(tau0 <- sqrt(tau00))
+```
+
+
+```{r}
+# Approximation formula (17.13) yields
+(var0 <- tau00*p0*(1-p0)*p0*(1-p0))
+```
+
+```{r}
+# The normal density in Figure 17.5 can be obtained by
+x <- tau0*c(-100:100)/40+b0
+y <- dnorm(x,mean=b0,sd=tau0)
+plot(x,y)
+```
+
+
+## Example 17.3
+
+```{r}
+# First calculation of some country-level averages
+
+edu.ave <- ave(level12_nT$educationallevel,level12_nT$COUNTRY)
+inc.ave <- ave(level12_nT$income,level12_nT$COUNTRY)
+unempl.ave <- ave(level12_nT$unemployed,level12_nT$COUNTRY)
+single.ave <- ave(level12_nT$SINGLE,level12_nT$COUNTRY)
+div.ave <- ave(level12_nT$DIVORCED,level12_nT$COUNTRY)
+wid.ave <- ave(level12_nT$widowed,level12_nT$COUNTRY)
+urb.ave <- ave(level12_nT$loglocalurbanization,level12_nT$COUNTRY)
+```
+
+
+```{r}
+# Deviation scores; use 17 as provisional centering constant
+edumin <- level12_nT$educationallevel - 17
+edumin.ave <- edu.ave - 17
+eduminmin <- edumin - edumin.ave
+level12_nT$gini <- level12_nT$gini - 35
+level12_nT$loglocalurbanization <- level12_nT$loglocalurbanization - 10
+```
+
+
+
+
+```{r}
+# Make a function for easy display of mean and s.d.
+d <- function(x){(c(mean(x),sqrt(var(x))))}
+# Means and s.d.s of dependent and explanatory variables
+d(level12_nT$religiousattendance)
+d(eduminmin)
+d(level12_nT$income)
+d(level12_nT$unemployed)
+d(level12_nT$FEMALE)
+d(level12_nT$SINGLE) 
+d(level12_nT$DIVORCED) 
+d(level12_nT$widowed)
+d(level12_nT$loglocalurbanization)
+d(level12_nT$gini)
+d(edumin.ave)
+d(unempl.ave)
+d(div.ave)
+```
+
+### mlm1
+
+```{r}
+# Table 17.2
+summary(mlm1 <- glmer(religiousattendance ~  eduminmin + income
+    + unemployed + FEMALE + SINGLE + DIVORCED + widowed 
+    + loglocalurbanization 
+    + gini +  edumin.ave +  unempl.ave 
+   + div.ave +  (1 |COUNTRY) ,
+          family = binomial, data=level12_nT))
+
+# The coefficient for edumin.ave is different from the Table in the book.
+# I (T.S.) do not know what happened.
+# Let us assume it was a transcription error.
+```
+
+
+### mlm2
+
+```{r}
+#Table 17.3
+# (the heading of the table should be "Logistic random slopes model" (etc.))
+########## summary(mlm2 <- lmer(religiousattendance ~  eduminmin + income
+##########    + unemployed + FEMALE + SINGLE + DIVORCED + widowed 
+##########    + loglocalurbanization 
+##########    + gini +  edumin.ave +  unempl.ave 
+##########   + div.ave +  (income + eduminmin |COUNTRY) ,
+##########          family = binomial, data=level12_nT))
+##########
+# This gives different numerical results than Table 17.3;
+# the intercept parameter is quite different, because 
+# a different centering is applied.
+# The other parameter estimates and standard errors are very similar.
+# This model is a quite complicated model,
+# and estimating it is hard, and sensitive to minor details
+# of the specification.
+# The centering choices applied in this r script
+# gives somewhat better stability than those that produced
+# Table 17.3 in the book.
+```
+
+## Example 17.5
+
+
+```{r}
+
+# First we have to compute the linear predictor.
+# The matrix of explanatory variables (the "design matrix")
+# is available for mer objects produced by lme4 as
+X1 <- getME(mlm1,"X")
+# The parameter estimates for the fixed effects are available as
+(beta1 <- fixef(mlm1))
+# The linear predictor, i.e., linear combination of the rows of X1
+# with weights being the estimated fixed effect parameters, is
+pred1 <- X1 %*% beta1
+# and has variance
+(sigma2_F <- var(pred1))
+# The explained variance according to formula (17.22) is
+sigma2_F/(sigma2_F + VarCorr(mlm1)$COUNTRY[1,1] + pi^2/3)
+```
+
+```{r}
+stop <- Sys.time()
+stop-start
+```
+
+## Example 17.6
+                                              
+```{r}
+# Read data
+#loop <- read.table("LOOPDIC.DAT",header=FALSE)
+```
+
+```{r}
+# What do we have?
+dim(loop)
+colSums(loop)
+names(loop)[1:3] <- c("school","cons","scisub")
+names(loop)[5:6] <- c("gender","minority")
+```
+
+### Model 1 in Table 17.4
+
+```{r}
+
+
+(summary(m1 <- glmer(scisub ~ gender + minority + (1 | school),
+                     family = binomial, data=loop)))
+
+```
+
+```{r}
+# For the explained variation,
+# first we have to compute the linear predictor.
+# The matrix of explanatory variables (the "design matrix")
+# is available for mer objects produced by lme4 as
+X1 <- getME(m1,"X")
+# The parameter estimates for the fixed effects are available as
+(beta1 <- fixef(m1))
+# The linear predictor, i.e., linear combination of the rows of X1
+# with weights being the estimated fixed effect parameters, is
+pred1 <- X1 %*% beta1
+# and has variance
+(sigma2_F <- var(pred1))
+# The explained variance according to formula (17.22) is
+sigma2_F/(sigma2_F + VarCorr(m1)$school[1,1] + pi^2/3)
+```
+
+### Model 2 in Table 17.5
+```{r}
+(summary(m2 <- glm(scisub ~ gender,
+                   family = binomial, data=loop)))
+
+```
+
+### Model 3 in Table 17.5
+```{r}
+(summary(m3 <- glmer(scisub ~ gender + (1 | school),
+                     family = binomial, data=loop)))
+deviance(m3)
+
+
+```
+
+### Model 1 in Table 17.4
+```{r}
+
+
+
+(summary(m4 <- glmer(scisub ~ minority + (1 | school),
+                     family = binomial, data=loop)))
+deviance(m4)
+```
+
+
+```{r}
+# The parameter estimates are slightly different compared to
+# Tables 17.4 and 17.5, because of the differences
+# of the algorithms used by lme4 and MIXOR.
+```
+
+
+

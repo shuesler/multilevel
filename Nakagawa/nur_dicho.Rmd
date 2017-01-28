@@ -1,0 +1,160 @@
+---
+title: "Verweis von Bosker & Snijder 2012"
+header-includes:
+   - \usepackage{bm}
+   - \usepackage{amsmath,amssymb,mathrsfs,booktabs}
+   - \newcommand{\matr}[1]{\mathbf{#1}} % undergraduate algebra version
+output: 
+  pdf_document:
+    keep_tex: false
+    highlight: pygments
+    number_sections: false
+nocite: | 
+  @Nakagawa.2013
+# -------------------------------------------------
+references:
+- id: Nakagawa.2013
+  type: article-journal
+  author:
+  - family: Nakagawa
+    given: Shinichi
+  - family: Schielzeth
+    given: Holger
+  - family: O'Hara
+    given: Robert B.
+  issued:
+  - year: '2013'
+  title: A general and simple method for obtaining r2 from generalized linear mixed-effects
+    models
+  container-title: Methods in Ecology and Evolution
+  page: '133-142'
+  volume: '4'
+  issue: '2'
+  DOI: 10.1111/j.2041-210x.2012.00261.x
+  ISSN: 2041210X
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(arm)
+library(lme4)
+```
+
+
+# 2. Analysis of colour morphs (Binomial mixed models)
+
+```{r}
+# Clear memory
+rm(list = ls())
+# Read colour morph data (Binary, available for males only)
+
+
+library(AzureML)
+ws <- workspace()
+
+Data <- download.datasets(
+  dataset = ws, 
+  name    = "BeetlesMale.csv")
+
+```
+
+---
+
+```{r}
+# Fit null model without fixed effects (but including all random effects)
+m0 <- glmer(Colour ~ 1 + (1 | Population) + (1 | Container), 
+            family = "binomial", data = Data)
+summary(m0)
+```
+
+---
+
+```{r}
+# Fit alternative model including fixed and all random effects
+mF <- glmer(Colour ~ Treatment + Habitat + (1 | Population) + (1 | Container), 
+            family = "binomial", data = Data)
+summary(mF)
+```
+
+---
+
+```{r}
+# Extraction of fitted value for the alternative model 
+# fixef() extracts coefficents for fixed effects 
+# mF@X returns fixed effect design matrix
+Fixed <- fixef(mF)[2] * getME(mF,"X")[, 2] + fixef(mF)[3] * getME(mF,"X")[, 3]
+
+fixef(mF)[2]
+fixef(mF)[3]
+```
+
+---
+
+```{r}
+# Calculation of the variance in fitted values
+VarF <- var(Fixed)
+
+VarF
+```
+
+---
+
+
+```{r}
+# An alternative way for getting the same result
+VarF <- var(as.vector(fixef(mF) %*% t(getME(mF,"X"))))
+```
+
+
+
+\newpage
+
+
+![](eq29.png) 
+
+
+```{r}
+# R2GLMM(m) - marginal R2GLMM
+# see Equ. 29 and 30 and Table 2
+VarF/(VarF + VarCorr(mF)$Container[1] + VarCorr(mF)$Population[1] + pi^2/3)
+```
+
+
+---
+
+```{r}
+VarCorr(mF)$Container[1]
+VarCorr(mF)$Population[1]
+```
+
+---
+
+![](eq30.png) 
+
+
+```{r}
+# R2GLMM(c) - conditional R2GLMM for full model
+# Equ. XXX, XXX
+(VarF + VarCorr(mF)$Container[1] + VarCorr(mF)$Population[1])/
+  (VarF + VarCorr(mF)$Container[1] + VarCorr(mF)$Population[1] + pi^2/3)
+```
+
+
+
+
+
+![](div.png) 
+
+
+
+# Literatur
+
+
+
+
+
+
+
+
+

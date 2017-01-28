@@ -1,0 +1,330 @@
+---
+title: "Producing the examples in chapters 4 and 5"
+output: 
+  pdf_document:
+    highlight: pygments
+    number_sections: true
+---
+
+
+<!--
+
+###################################################################
+###  ch45.r                                                     ###
+###                                                             ###
+###  This is an R script for producing the examples in          ###
+###  chapters 4 and 5 of                                        ###
+###  Snijders, Tom A.B., and Bosker, Roel J.                    ###
+###  Multilevel Analysis:                                       ###
+###  An Introduction to Basic and Advanced Multilevel Modeling, ###
+###  second edition.                                            ###
+###  London etc.: Sage Publishers, 2012                         ###
+###                                                             ###
+###  version June 14, 2014                                      ###
+###                                                             ###
+###################################################################
+
+-->
+
+
+```{r, include=FALSE}
+
+library(tidyverse)
+library(AzureML)
+ws <- workspace()
+
+mlbook_red <- tbl_df(download.datasets(
+  dataset = ws, 
+  name    = "mlbook2_r.csv"))
+
+# what are the names
+names(mlbook_red)
+
+
+# Note that school means can be calculated by functions such as
+# schmeans <- aggregate(mlbook_red, by = list(mlbook_red$schoolnr), mean)
+# But this is not necessary here because the school means
+# are already in the data set.
+```
+
+
+
+```{r, include=FALSE}
+# Attach library
+library(lme4)
+
+# How does function lmer work
+?lmer
+# In the Examples in this help page, data from "sleepstudy" are used.
+# This is a longitudinal data set,
+# and can serve as an illustration of the type of
+# longitudinal data that can be modeled by the Hierarchical Linear Model.
+?sleepstudy
+```
+
+
+
+# Example 4.1
+```{r}
+mlb0 <- lmer(langPOST ~  (1|schoolnr), data = mlbook_red,
+             REML = FALSE)
+summary(mlb0)
+```
+
+
+# Example 4.3, Table 4.4
+
+```{r}
+
+mlb44 <- lmer(langPOST ~ IQ_verb + sch_iqv
+                        + (1|schoolnr), data = mlbook_red,
+                        REML = FALSE)
+summary(mlb44)
+```
+
+
+
+## The parameters of the random part of the model are in
+```{r}
+VarCorr(mlb44)
+```
+
+
+
+## the estimated intercept variance is
+```{r}
+VarCorr(mlb44)$schoolnr[1,1]
+```
+
+
+## For other methods for the objects produced by lmer, see
+```{r}
+methods(class="merMod")
+```
+
+
+# Section 4.8.
+## The posterior means are obtained as follows: the word ranef stands for "random effects"
+```{r}
+re.mlb44 <- ranef(mlb44, condVar=TRUE, standard=TRUE)
+tbl_df(re.mlb44$schoolnr) %>% glimpse
+```
+
+
+## The condVar parameter will also give the posterior variances. What is the structure of this object?
+```{r}
+str(re.mlb44)
+```
+
+##The posterior means are
+```{r}
+postmean <- re.mlb44$schoolnr[,1]
+str(postmean)
+```
+
+##  and the posterior variances are
+```{r}
+postvar <-  attr(re.mlb44$schoolnr,'postVar')[1,1,]
+head(postvar)
+```
+
+
+
+## These are also the comparative variances. The diagnostic variance is calculated using (4.18):
+```{r}
+diagvar <- VarCorr(mlb44)$schoolnr[1,1] - postvar
+diagvar[1:5] 
+```
+
+
+# Comparative standard deviations
+```{r}
+compsd <- sqrt(postvar)
+compsd[1:5]
+```
+
+
+# Bounds of comparative intervals
+```{r}
+lower <- postmean - 1.39*compsd
+upper <- postmean + 1.39*compsd
+lower[1:5]
+upper[1:5]
+```
+
+
+
+## Order
+```{r}
+perm <- order(postmean, lower, upper)
+pm_sort <- postmean[perm]
+upper_sort <- upper[perm]
+lower_sort <- lower[perm]
+pm_sort[1:5]
+upper_sort[1:5]
+pm_sort[1:5]
+```
+
+
+
+## A caterpillar plot like Fig. 4.4 can be produced as follows.
+```{r, eval=FALSE}
+library(Hmisc)
+errbar(1:211, pm_sort, upper_sort, lower_sort)
+```
+
+# Example 5.4
+
+\newpage
+
+```{r}
+form <- langPOST ~ 
+  1 + 
+  IQ_verb + 
+  ses + 
+  sch_iqv + 
+  sch_ses +
+  IQ_verb:ses +
+  sch_iqv:sch_ses +
+  (1 + IQ_verb|schoolnr)
+
+mlb54sh <- lmer(form, data = mlbook_red,
+                        REML = FALSE)
+
+summary(mlb54sh)
+
+```
+
+\newpage
+
+```{r}
+
+mlb54 <- lmer(langPOST ~ IQ_verb*ses + sch_iqv*sch_ses
+                        + (IQ_verb|schoolnr), data = mlbook_red,
+                        REML = FALSE)
+summary(mlb54)
+
+```
+
+
+```{r}
+mlb54 <- lmer(langPOST ~ IQ_verb*ses + sch_iqv*sch_ses
+                        + (IQ_verb|schoolnr), data = mlbook_red,
+                        REML = TRUE)
+summary(mlb54)
+```
+
+
+
+
+
+```{r}
+library("R2MLwiN")
+library("doBy")
+options(MLwiN_path = "C:/Program Files (x86)/MLwiN trial/i386/")
+
+form <- langPOST ~ 
+  1 + 
+  IQ_verb + 
+  ses + 
+  sch_iqv + 
+  sch_ses +
+  IQ_verb:ses +
+  sch_iqv:sch_ses +
+  (1 + IQ_verb|schoolnr)
+
+(mymodel1 <- runMLwiN(form, data = mlbook_red))
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+<!--
+
+########################## nlme ##################################
+
+# The preceding analysis can also be done using nlme:
+detach("package:lme4")
+library(nlme)
+# The main function here is lme
+?lme
+# and, as you see, the data used in the example of the help page is
+?Orthodont
+#also a longitudinal data set.
+
+# Example 4.3, Table 4.4
+mlb44 <- lme(langPOST ~ IQ_verb + sch_iqv,
+                        random = ~ 1|schoolnr, data = mlbook_red, method="ML")
+summary(mlb44)
+
+# The estimates of the random part are given by
+VarCorr(mlb44)
+str(VarCorr(mlb44))
+# The estimated intercept variance is
+VarCorr(mlb44)$schoolnr[1,1]
+# with associated standard deviation
+sqrt(as.numeric(VarCorr(mlb44)$schoolnr[1,1]))
+# also given by
+attr(VarCorr(mlb44)$schoolnr, "stddev")
+
+# To get the standard errors (of which the relevance is minor,
+# as they should not be used for testing the hypothesis
+# of a zero variance), it may be noted that the
+# covariance matrix of the logarithms of the standard deviation parameters
+# can be obtained from
+(se.log.sd = sqrt(diag(mlb44$apVar)))
+# For the component apVar and other components of the object
+# returned by lme, look at the help page for
+# ?lmeObject
+
+# The standard errors of the intercept variance and corresponding
+# standard deviation can be obtained from se.log.var
+# by the delta method, see formulae (6.2) in Section 6.3.1.
+# Note that se.log.sd = standard error(log(s.d.))
+#                     = 0.5*standard error(log(variance))
+# From (6.2) we see that the standard error of the variance
+# is the variance times the standard error of the log-variance.
+# This can be obtained for both the level-2 variance
+# and the level-1 variance by
+2*se.log.sd * as.numeric(VarCorr(mlb44)[,1])
+# The standard errors of the estimated standard deviations are
+se.log.sd * as.numeric(VarCorr(mlb44)[,2])
+
+# Example 4.4: The REML estimate
+mlb44_reml <- lme(langPOST ~ IQ_verb + sch_iqv,
+                        random = ~ 1|schoolnr, data = mlbook_red, method="REML")
+summary(mlb44_reml)
+# The estimates of the random part using ML are
+VarCorr(mlb44)
+# and those using REML are
+VarCorr(mlb44_reml)
+
+# The posterior means
+post.means <- ranef(mlb44_reml)
+
+# Section 4.9
+# The data are currently not available.
+# A three-level random intercept model can be fitted, e.g., by the command
+# model_lev3 <- lme(math ~ IQ, random =list(~1|schoolnr, ~1|classnr))
+# if the level-2 identifier is classnr and the level-3 identifier is schoolnr.
+
+# Example 5.4
+mlb54 <- lme(langPOST ~ IQ_verb*ses + sch_iqv*sch_ses,
+                        random =~ IQ_verb|schoolnr, data = mlbook_red,
+                        method="ML")
+summary(mlb54)
+
+
+-->
+
+
+
